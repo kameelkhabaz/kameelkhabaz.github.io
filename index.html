@@ -36,9 +36,34 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="image" href="profile.webp" type="image/webp" fetchpriority="high">
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..600,0..100;1,9..144,400..600,0..100&family=Inter:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,400..600,0..100;1,9..144,400..600,0..100&family=Inter:wght@400;500;600&display=swap">
+<link rel="preload" as="image" href="profile-480.webp" type="image/webp" fetchpriority="high" media="(max-width: 720px)">
+<link rel="preload" as="image" href="profile.webp" type="image/webp" fetchpriority="high" media="(min-width: 721px)">
+
+<!-- Critical CSS shim — hero paints before style.css/fonts arrive -->
+<style>
+:root{--bg:#f4efe1;--fg:#0d1d44;--accent:#1e3a8a;--accent-gold:#a8853b;--rule:#d8cea8}
+@media (prefers-color-scheme:dark){:root{--bg:#0a1226;--fg:#ece6d2;--rule:#243366}}
+*{box-sizing:border-box}
+html{font-size:17.5px}@media (max-width:720px){html{font-size:16.5px}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-serif,"Iowan Old Style","Charter",Georgia,serif;line-height:1.65;min-height:100vh;-webkit-font-smoothing:antialiased}
+.page{max-width:720px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:2}
+main{padding:6.5rem 0 7rem}@media (max-width:720px){main{padding:3.5rem 0 4.5rem}}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:3.5rem;align-items:center;margin-bottom:7.5rem}
+@media (max-width:720px){.hero{grid-template-columns:1fr;gap:1.5rem;margin-bottom:3rem}}
+.hero-text{min-width:0}
+.hero-photo{margin:0;width:230px;height:230px;border-radius:50%;background:var(--rule);padding:5px;position:relative}
+@media (max-width:720px){.hero-photo{width:132px;height:132px;padding:4px;order:-1}}
+.hero-photo .photo-frame{width:100%;height:100%;border-radius:50%;overflow:hidden;display:block}
+.hero-photo img{width:100%;height:100%;object-fit:cover;display:block}
+h1{font-size:clamp(2.6rem,6.2vw,4rem);line-height:1.02;margin:0 0 1.3rem;letter-spacing:-0.028em;font-weight:500;color:var(--fg)}
+.kicker{font-size:0.72rem;letter-spacing:0.26em;text-transform:uppercase;color:#6b7392;margin:0 0 1.5rem}
+.lede{font-size:1.08rem;line-height:1.6;margin:0 0 1.9rem}
+</style>
+
+<!-- Async-load Google Fonts (non-blocking) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500;1,9..144,400..500&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..500;1,9..144,400..500&family=Inter:wght@400;500;600&display=swap"></noscript>
+
 <link rel="stylesheet" href="style.css">
 
 <script type="application/ld+json">
@@ -275,8 +300,10 @@
   <figure class="hero-photo">
     <span class="photo-frame">
       <picture>
-        <source srcset="profile.webp" type="image/webp">
-        <img src="profile.jpg" alt="Portrait of Kameel Khabaz" width="1000" height="1000" loading="eager" fetchpriority="high">
+        <source type="image/webp" media="(max-width: 720px)" srcset="profile-480.webp">
+        <source type="image/jpeg" media="(max-width: 720px)" srcset="profile-480.jpg">
+        <source type="image/webp" srcset="profile.webp">
+        <img src="profile.jpg" alt="Portrait of Kameel Khabaz" width="1000" height="1000" loading="eager" fetchpriority="high" decoding="async">
       </picture>
     </span>
   </figure>
@@ -373,6 +400,11 @@
 </div>
 
 <script>
+// Defer looping background animations until after window load
+addEventListener('load', () => {
+  setTimeout(() => document.documentElement.classList.add('animated'), 600);
+});
+
 // Reveal on scroll
 (function() {
   if (!('IntersectionObserver' in window)) {

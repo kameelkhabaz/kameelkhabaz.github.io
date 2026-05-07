@@ -187,7 +187,9 @@ body::before {
   border-radius: 50%;
   filter: blur(120px);
   will-change: transform;
+  animation-play-state: paused;
 }
+html.animated .ambient .blob { animation-play-state: running; }
 .ambient .b1 {
   width: 95vmax; height: 95vmax;
   top: -50vmax; left: 50%;
@@ -226,8 +228,10 @@ body::before {
   background: radial-gradient(circle, rgba(184, 140, 60, 0.95) 0%, rgba(184, 140, 60, 0.45) 35%, rgba(184, 140, 60, 0) 70%);
   box-shadow: 0 0 7px rgba(184, 140, 60, 0.4);
   animation: float-up linear infinite;
+  animation-play-state: paused;
   opacity: 0;
 }
+html.animated .dust span { animation-play-state: running; }
 @media (prefers-color-scheme: dark) {
   .dust span {
     background: radial-gradient(circle, rgba(255, 220, 150, 0.95) 0%, rgba(220, 180, 110, 0.5) 35%, transparent 70%);
