@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kameelkhabaz.github.io/sitemap.xml
