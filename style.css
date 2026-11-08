@@ -104,3 +104,4 @@ ul.edu .more{margin-left:.6rem;color:var(--accent)}
 ul.edu .more::before{content:"+"}
 ul.edu details[open] .more::before{content:"\2212"}
 ul.edu details .small{margin:.5rem 0 0}
+.viewer.dragging .xh{opacity:1}

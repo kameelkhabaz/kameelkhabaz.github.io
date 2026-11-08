@@ -64,8 +64,8 @@
       "primaryImageOfPage": {
         "@id": "https://kameelkhabaz.github.io/#photo"
       },
-      "dateCreated": "2026-05-07",
-      "dateModified": "2026-11-07",
+      "dateCreated": "2026-05-07T12:00:00-07:00",
+      "dateModified": "2026-11-08T12:00:00-08:00",
       "inLanguage": "en-US"
     },
     {
@@ -163,7 +163,7 @@
         "@type": "Article",
         "headline": "Inside access: Transarterial embolization for refractory adhesive capsulitis",
         "url": "https://www.sirweb.org/ir-quarterly/research/inside-access-kameel-khabaz-and-sammy-allaw/",
-        "datePublished": "2026-05-08",
+        "datePublished": "2026-05-08T00:00:00-05:00",
         "publisher": {
           "@type": "Organization",
           "name": "Society of Interventional Radiology",
@@ -547,28 +547,90 @@
 <script>
 (function(){
   var v=document.querySelector('.viewer'); if(!v)return;
-  var W=400,L=40,W0=400,L0=40,drag=null, out=v.querySelector('.wl'), xh=v.querySelector('.xh');
+  var W0=400,L0=40,W=W0,L=L0, out=v.querySelector('.wl'), xh=v.querySelector('.xh');
+  var suppressClick=false;
+  function clampW(x){return Math.max(60,Math.min(2000,x))}
+  function clampL(x){return Math.max(-200,Math.min(300,x))}
   function apply(){
     var c=Math.max(.35,Math.min(3,W0/W)), b=Math.max(.45,Math.min(1.8,1+(L0-L)/180));
     v.style.setProperty('--c',c.toFixed(3)); v.style.setProperty('--b',b.toFixed(3));
-    out.textContent='W '+Math.round(W)+' \u00b7 L '+Math.round(L);
+    out.textContent='W '+Math.round(W)+' · L '+Math.round(L);
   }
-  var moved=false;
-  v.addEventListener('pointerdown',function(e){if(e.button!==0||e.target.closest('a,button'))return;moved=false;drag={x:e.clientX,y:e.clientY,W:W,L:L,id:e.pointerId};if(e.pointerType==='mouse')e.preventDefault()});
-  v.addEventListener('selectstart',function(e){if(!e.target.closest||!e.target.closest('a'))e.preventDefault()});
+  function reset(){W=W0;L=L0;apply()}
+  function cross(x,y){var r=v.getBoundingClientRect();xh.style.setProperty('--x',(x-r.left)+'px');xh.style.setProperty('--y',(y-r.top)+'px')}
+  function clearSel(){var s=window.getSelection&&getSelection();if(s)s.removeAllRanges()}
+  function onLink(t){return t&&t.closest&&t.closest('a,button')}
+
+  v.addEventListener('selectstart',function(e){if(!onLink(e.target))e.preventDefault()});
   v.addEventListener('dragstart',function(e){e.preventDefault()});
-  v.addEventListener('click',function(e){if(moved){e.preventDefault();e.stopPropagation();moved=false}},true);
-  v.addEventListener('pointermove',function(e){
-    var r=v.getBoundingClientRect(); xh.style.setProperty('--x',(e.clientX-r.left)+'px'); xh.style.setProperty('--y',(e.clientY-r.top)+'px');
-    if(!drag)return;
-    if(!moved&&Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>4){moved=true;v.classList.add('dragging');try{v.setPointerCapture(drag.id)}catch(_){}var sel=window.getSelection&&getSelection();if(sel)sel.removeAllRanges()}
-    if(!moved)return;
-    W=Math.max(60,Math.min(2000,drag.W+(e.clientX-drag.x)*3));
-    if(e.pointerType==='mouse')L=Math.max(-200,Math.min(300,drag.L+(e.clientY-drag.y)*1.2));
-    apply();
+  v.addEventListener('contextmenu',function(e){if(!onLink(e.target))e.preventDefault()});
+  v.addEventListener('click',function(e){if(suppressClick){e.preventDefault();e.stopPropagation();suppressClick=false}},true);
+
+  /* Mouse / pen: drag horizontally for window, vertically for level */
+  var drag=null;
+  v.addEventListener('pointerdown',function(e){
+    if(e.pointerType==='touch'||e.button!==0||onLink(e.target))return;
+    drag={x:e.clientX,y:e.clientY,W:W,L:L,id:e.pointerId,moved:false}; e.preventDefault();
   });
-  ['pointerup','pointercancel'].forEach(function(t){v.addEventListener(t,function(){drag=null;v.classList.remove('dragging')})});
-  v.addEventListener('dblclick',function(){W=W0;L=L0;apply()});
+  v.addEventListener('pointermove',function(e){
+    if(e.pointerType==='touch')return;
+    cross(e.clientX,e.clientY);
+    if(!drag)return;
+    var dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+    if(!drag.moved&&Math.abs(dx)+Math.abs(dy)>4){drag.moved=true;v.classList.add('dragging');try{v.setPointerCapture(drag.id)}catch(_){}clearSel()}
+    if(!drag.moved)return;
+    W=clampW(drag.W+dx*3); L=clampL(drag.L+dy*1.2); apply();
+  });
+  ['pointerup','pointercancel'].forEach(function(t){v.addEventListener(t,function(e){
+    if(e.pointerType==='touch')return;
+    if(drag&&drag.moved)suppressClick=true;
+    drag=null; v.classList.remove('dragging');
+  })});
+  v.addEventListener('dblclick',reset);
+
+  /* Touch (iPhone/Android):
+     - swipe sideways: window (contrast); vertical swipes still scroll the page
+     - press and hold ~0.35s, then drag: window + level
+     - double-tap: reset */
+  var t=null, holdTimer=null, lastTap=0;
+  function endTouch(){
+    clearTimeout(holdTimer);
+    if(t&&(t.mode==='h'||t.mode==='both'))suppressClick=true;
+    t=null; v.classList.remove('dragging');
+  }
+  v.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1||onLink(e.target)){endTouch();return}
+    var p=e.touches[0];
+    t={x:p.clientX,y:p.clientY,W:W,L:L,mode:null,moved:false};
+    clearTimeout(holdTimer);
+    holdTimer=setTimeout(function(){
+      if(t&&!t.mode&&!t.moved){t.mode='both';t.x=p.clientX;t.y=p.clientY;t.W=W;t.L=L;v.classList.add('dragging');cross(t.x,t.y);clearSel();
+        if(navigator.vibrate)navigator.vibrate(10)}
+    },350);
+  },{passive:true});
+  v.addEventListener('touchmove',function(e){
+    if(!t)return;
+    var p=e.touches[0], dx=p.clientX-t.x, dy=p.clientY-t.y;
+    if(Math.abs(dx)>3||Math.abs(dy)>3)t.moved=true;
+    if(!t.mode){
+      if(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)*1.2){t.mode='h';clearTimeout(holdTimer);v.classList.add('dragging')}
+      else if(Math.abs(dy)>8){t.mode='scroll';clearTimeout(holdTimer);return}
+      else return;
+    }
+    if(t.mode==='scroll')return;
+    if(e.cancelable)e.preventDefault();
+    cross(p.clientX,p.clientY);
+    W=clampW(t.W+dx*3);
+    if(t.mode==='both')L=clampL(t.L+dy*1.2);
+    apply();
+  },{passive:false});
+  v.addEventListener('touchend',function(e){
+    var tap=t&&!t.moved&&!t.mode;
+    endTouch();
+    if(tap&&!onLink(e.target)){var now=Date.now();if(now-lastTap<300){reset();lastTap=0;if(e.cancelable)e.preventDefault()}else lastTap=now}
+  });
+  v.addEventListener('touchcancel',endTouch);
+
   apply();
 })();
 </script>
